@@ -13,6 +13,7 @@ with st.sidebar:
     st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
     st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
+    st.page_link("pages/sku_detection.py", label="👁️ Detector")
     logout_button()
 
 app_header("Settings")

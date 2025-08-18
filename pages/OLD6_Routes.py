@@ -17,6 +17,7 @@ with st.sidebar:
     st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
     st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
+    st.page_link("pages/sku_detection.py", label="👁️ SKU Detection") 
     logout_button()
 
 app_header("GenAI-Powered Route Optimisation")
