@@ -10,7 +10,9 @@ with st.sidebar:
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
     st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
+    st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
+    st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
     logout_button()
 
 app_header("Settings")
