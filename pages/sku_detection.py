@@ -29,8 +29,10 @@ with st.sidebar:
     st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
     st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
-    st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")   
-    st.page_link("pages/sku_detection.py", label="👁️ Detector")
+    st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
+    st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
+    st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
+    st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
 # Initialize history in session state
