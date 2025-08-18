@@ -65,43 +65,54 @@ def setup_2fa_page():
 
 def main_app():
     """Main application after authentication"""
-    st.title("🚀 Your Streamlit App")
+    st.title("📊 Dashboard")
     
     # Sidebar with logout
     with st.sidebar:
         st.write(f"Welcome! You are logged in.")
+
+        # Navigation links using st.page_link
+        # 'pages/chatbot_page.py' refers to the new chatbot page file.
+        st.page_link("app.py", label="📊 Dashboard") 
+        st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
+        st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
+
         if st.button("Logout"):
             st.session_state.authenticated = False
             st.rerun()
     
-    # Main content
-    st.write("## Dashboard")
-    st.write("This is where your main application content will go.")
-    
-    # Placeholder sections for future features
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write("### FastAPI ML Models")
-        st.info("Connect to your Google Cloud deployed models here")
-        if st.button("Test ML Model Connection"):
-            st.write("🔄 This will connect to your FastAPI endpoints")
-    
-    with col2:
-        st.write("### Database")
-        st.info("MySQL database connection will go here")
-        if st.button("Test Database Connection"):
-            st.write("🔄 This will test your MySQL connection")
-    
-    # Sample data display
-    st.write("### Sample Data")
-    import pandas as pd
-    sample_data = pd.DataFrame({
-        'Name': ['Alice', 'Bob', 'Charlie'],
-        'Value': [10, 20, 30],
-        'Status': ['Active', 'Inactive', 'Active']
-    })
-    st.dataframe(sample_data)
+    looker_studio_html = """
+    <style>
+        /* Ensure the iframe scales responsively */
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%; /* Aspect Ratio 5:4 (height/width * 100). Adjust as needed. */
+            height: 0;
+            overflow: hidden;
+            border-radius: 0.5rem;
+        }
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 0.5rem;
+        }
+    </style>
+    <div class="iframe-container">
+        <iframe
+            src="https://lookerstudio.google.com/embed/reporting/2f87a2eb-d0c9-4827-ac47-f7e2cdcbedff/page/58qUF"
+            frameborder="0"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+            aria-label="Looker Studio Embedded Report"
+        ></iframe>
+    </div>
+    """
+    st.markdown(looker_studio_html, unsafe_allow_html=True)
 
 def main():
     """Main application logic"""
