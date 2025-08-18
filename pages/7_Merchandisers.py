@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import folium
-from streamlit_folium import st_folium
 from utils.auth import require_auth, logout_button
 from utils.components import app_header, hide_default_pages_nav
 from utils.db import get_outlets
@@ -25,46 +24,114 @@ with st.sidebar:
     st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
-app_header("Merchandiser Profiles & Original Routes")
+app_header("Merchandiser Profiles & Routes")
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=None)
 def build_profiles():
     outs = get_outlets().dropna(subset=["postal_code"]).copy()
     outs = outs.head(120)
     outs["label"] = outs.apply(lambda r: f"{r.get('city','Unknown')} ({r['postal_code']})", axis=1)
-    chunk = 10
+
     names = ["Alicia (West Team)","Ben (Central Team)","Chen (East Team)","Dana (North Team)","Evan (Night Shift)","Farah (Weekend Crew)"]
+    contacts = {
+        "Alicia (West Team)": "+1-555-0110",
+        "Ben (Central Team)": "+1-555-0111",
+        "Chen (East Team)": "+1-555-0112",
+        "Dana (North Team)": "+1-555-0113",
+        "Evan (Night Shift)": "+1-555-0114",
+        "Farah (Weekend Crew)": "+1-555-0115",
+    }
+    homes = {
+        "Alicia (West Team)": ["94618","94708"],
+        "Ben (Central Team)": ["10001","10002"],
+        "Chen (East Team)": ["98109","98107"],
+        "Dana (North Team)": ["60614","60657"],
+        "Evan (Night Shift)": ["75201","75001"],
+        "Farah (Weekend Crew)": ["30305","30306"],
+    }
+
     profiles = {}
+    chunk = 10
     for i, name in enumerate(names):
         seg = outs.iloc[i*chunk:(i+1)*chunk]
         if len(seg) == 0:
             seg = outs.sample(min(chunk, len(outs)), replace=False)
         stops = [Stop(str(r["postal_code"]), r["label"], "normal") for _, r in seg.iterrows()][:10]
-        start_pc = stops[0].postal_code if stops else str(outs.iloc[0]["postal_code"])
-        profiles[name] = {"start": start_pc, "stops": stops}
+        outlet_zips = {s.postal_code for s in stops}
+        home_pc = next((pc for pc in homes[name] if pc not in outlet_zips), homes[name][0])
+        profiles[name] = {"home": home_pc, "contact": contacts[name], "stops": stops}
     return profiles
 
 profiles = build_profiles()
 
-rows = [{"Merchandiser": n, "Start": p["start"], "Stops": len(p["stops"])} for n,p in profiles.items()]
-st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+default_modes = {name: "driving" for name in profiles.keys()}
+default_modes.update(st.session_state.get("routing_modes", {}))
+
+@st.cache_data(ttl=None)
+def cached_geocode(pc: str):
+    return geocode_pc(pc)
+
+@st.cache_data(ttl=None)
+def build_map_html(profiles_dict: dict, modes_dict: dict, version: int):
+    m = folium.Map(location=[39.50, -98.35], zoom_start=4)
+    colors = ["red","blue","green","purple","orange","darkred"]
+    for (name, prof), color in zip(profiles_dict.items(), colors):
+        mode = modes_dict.get(name, "driving")
+        res = greedy_route(prof["home"], prof["stops"], mode=mode)
+        coords = []
+        hc = cached_geocode(prof["home"])
+        if hc:
+            coords.append((hc[0], hc[1], f"{name} Home"))
+        for s in res.ordered:
+            c = cached_geocode(s.postal_code)
+            if c:
+                coords.append((c[0], c[1], s.label))
+        if coords:
+            folium.PolyLine([(lat,lng) for lat,lng,_ in coords], tooltip=f"{name} ({mode})", color=color).add_to(m)
+            for idx,(lat,lng,label) in enumerate(coords, start=1):
+                folium.CircleMarker((lat,lng), radius=4, popup=f"{name} · #{idx}: {label}", color=color, fill=True, fill_opacity=0.7).add_to(m)
+    return m._repr_html_()
+
+if "merch_map_version" not in st.session_state:
+    st.session_state.merch_map_version = 0
+if "merch_map_html" not in st.session_state:
+    st.session_state.merch_map_html = None
+
+colA, colB = st.columns([1,2])
+with colA:
+    if st.button("🔄 Rebuild map with latest routes"):
+        st.session_state.merch_map_version += 1
+        st.session_state.merch_map_html = build_map_html(profiles, default_modes, st.session_state.merch_map_version)
+with colB:
+    st.caption("Map persists across refresh/navigation. Click **Rebuild** to update.")
+
+if st.session_state.merch_map_html is None:
+    st.session_state.merch_map_html = build_map_html(profiles, default_modes, st.session_state.merch_map_version)
+
+st.components.v1.html(st.session_state.merch_map_html, height=540, scrolling=False)
 
 st.divider()
-st.subheader("Routes on Map")
+st.subheader("Leg details for a merchandiser")
 
-m = folium.Map(location=[39.50, -98.35], zoom_start=4)  # USA center
-colors = ["red","blue","green","purple","orange","darkred"]
-for (name, p), color in zip(profiles.items(), colors):
-    res = greedy_route(p["start"], p["stops"], mode="driving")
-    coords = []
-    for s in res.ordered:
-        c = geocode_pc(s.postal_code)
-        if c: coords.append((c[0], c[1], s.label))
-    if coords:
-        folium.PolyLine([(lat,lng) for lat,lng,_ in coords], tooltip=name, color=color).add_to(m)
-        for idx,(lat,lng,label) in enumerate(coords, start=1):
-            folium.CircleMarker((lat,lng), radius=4, popup=f"{name} · #{idx}: {label}", color=color, fill=True, fill_opacity=0.7).add_to(m)
+col1, col2, col3 = st.columns([2,1,1])
+with col1:
+    sel_name = st.selectbox("Choose merchandiser", list(profiles.keys()))
+with col2:
+    mode = default_modes.get(sel_name, "driving")
+    st.write(f"Mode: **{mode}**")
+with col3:
+    go = st.button("Load leg details")
 
-st_folium(m, width=None, height=520)
+st.caption(f"Merchandiser: **{sel_name}**  ·  Home: `{profiles[sel_name]['home']}`  ·  Contact: `{profiles[sel_name]['contact']}`")
 
-st.info("Use the 🗺️ Routes (GenAI) page to change priorities via text and recompute on the fly.")
+if go:
+    with st.spinner("Computing leg details..."):
+        res = greedy_route(profiles[sel_name]["home"], profiles[sel_name]["stops"], mode=mode)
+        legs_df = pd.DataFrame([{
+            "from": leg["from"],
+            "to": leg["to"],
+            "priority": leg["priority"],
+            "time_min": leg["time_min"],
+            "distance_km": leg["dist_km"],
+        } for leg in res.legs])
+    st.dataframe(legs_df, use_container_width=True, hide_index=True)

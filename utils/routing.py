@@ -45,10 +45,11 @@ def _duration_matrix_single_origin(origin: str, destinations: List[str], mode: s
         d_val = el["distance"]["value"]
         t_val = el["duration"]["value"]
         mins = (t_val if t_val > 0 else 60) / 60.0
-        km = (d_val if d_val > 0 else 1000) / 1000.0
+        km   = (d_val if d_val > 0 else 1000) / 1000.0
         out.append((mins, km, el))
     return out
 
+@st.cache_data(ttl=86400, show_spinner=False)
 def geocode_pc(pc: str):
     params = {
         "address": pc,
@@ -110,7 +111,7 @@ def greedy_route(start_pc: str, stops: List[Stop], mode: str = "driving") -> Rou
         })
         total_min += chosen_mins; total_km += chosen_km
         cur = chosen.postal_code
-        time.sleep(0.1)
+        time.sleep(0.08)
 
     if ordered:
         origin = urllib.parse.quote_plus(_fmt_addr(start_pc))
