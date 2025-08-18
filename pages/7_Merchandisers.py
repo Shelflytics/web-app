@@ -11,13 +11,15 @@ hide_default_pages_nav()
 require_auth()
 
 with st.sidebar:
+    st.image("assets\shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
     st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
     st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
-    st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")   
+    st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
+    st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
 app_header("Merchandiser Profiles & Routes")
