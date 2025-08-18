@@ -1,8 +1,25 @@
 import streamlit as st
 import httpx # Required for API calls from UI
 
+from utils.auth import logout_button
+from utils.components import hide_default_pages_nav
+
+hide_default_pages_nav()
+
 # Chatbot UI Logic
 def render_chatbot_page():
+
+    with st.sidebar:
+        st.page_link("pages/1_Home.py", label="🏠 Home")
+        st.page_link("pages/2_SKUs.py", label="📦 SKUs")
+        st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
+        st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
+        st.page_link("pages/6_Routes.py", label="🗺️ Routes")
+        st.page_link("pages/5_Settings.py", label="⚙️ Settings")
+        st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
+        st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
+        st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
+        logout_button()
     # Authentication Check
     # Redirect to the main app (login page) if not authenticated
     if 'authenticated' not in st.session_state or not st.session_state.authenticated:
@@ -10,19 +27,6 @@ def render_chatbot_page():
         # Use st.switch_page to redirect to the main app.py (login page)
         st.switch_page("app.py") 
         return # Stop execution of this function if not authenticated
-
-    # Sidebar with logout
-    with st.sidebar:
-        st.write(f"Welcome! You are logged in.")
-
-        # Navigation links using st.page_link
-        st.page_link("app.py", label="📊 Dashboard") 
-        st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
-        st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
-
-        if st.button("Logout"):
-            st.session_state.authenticated = False
-            st.rerun()
             
     st.title("🤖 Outlet Performance Chatbot")
     st.write("Ask questions about the outlet performance data.")

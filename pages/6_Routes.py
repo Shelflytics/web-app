@@ -18,6 +18,8 @@ with st.sidebar:
     st.page_link("pages/6_Routes.py", label="🗺️ Routes")
     st.page_link("pages/5_Settings.py", label="⚙️ Settings")
     st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
+    st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
+    st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
     logout_button()
 
 app_header("GenAI-Powered Route Optimisation")

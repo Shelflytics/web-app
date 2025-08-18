@@ -2,7 +2,10 @@ import streamlit as st
 import httpx
 import datetime
 import pandas as pd  # Used for options for selectbox
+from utils.auth import logout_button
+from utils.components import hide_default_pages_nav
 
+hide_default_pages_nav()
 # Modal dialog for prediction
 @st.dialog("Item Performance Prediction")
 def _prediction_dialog():
@@ -118,18 +121,17 @@ def render_prediction_page():
         st.switch_page("app.py") 
         return
 
-    # Sidebar with logout
     with st.sidebar:
-        st.write(f"Welcome! You are logged in.")
-
-        # Navigation links using st.page_link
-        st.page_link("app.py", label="📊 Dashboard") 
+        st.page_link("pages/1_Home.py", label="🏠 Home")
+        st.page_link("pages/2_SKUs.py", label="📦 SKUs")
+        st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
+        st.page_link("pages/4_SKU_Recommender.py", label="🤖 Recommender")
+        st.page_link("pages/6_Routes.py", label="🗺️ Routes")
+        st.page_link("pages/5_Settings.py", label="⚙️ Settings")
+        st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
         st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
         st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
-
-        if st.button("Logout"):
-            st.session_state.authenticated = False
-            st.rerun()
+        logout_button()
     
     st.title("📈 Item Sales Prediction")
     st.write("Enter the details below to predict the sales performance of an item.")
