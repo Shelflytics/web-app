@@ -2,18 +2,9 @@ import streamlit as st
 
 def app_header(title: str = "SKU Admin Portal"):
     # Simple header with placeholder for a logo
-    left, right = st.columns([1, 6])
+    left, right = st.columns([1, 10])
     with left:
-        # Placeholder block for logo
-        st.markdown(
-            '''
-            <div style="width:100%;height:64px;border-radius:12px;border:1px dashed rgba(226,226,230,0.35);
-                        display:flex;align-items:center;justify-content:center;opacity:0.9;">
-                <span style="font-size:12px;color:#E2E2E6;opacity:0.8;">Logo Placeholder</span>
-            </div>
-            ''',
-            unsafe_allow_html=True
-        )
+        st.image("assets\shelflytics_logo_no_word_transparent_white.png")
     with right:
         st.title(title)
 
