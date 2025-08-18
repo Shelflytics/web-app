@@ -22,6 +22,7 @@ hide_default_pages_nav()
 require_auth()
 
 with st.sidebar:
+    st.image("assets\shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
@@ -37,7 +38,7 @@ if "sku_history" not in st.session_state:
     st.session_state.sku_history = []
 
 
-st.title("👁️ SKU Detection")
+app_header("SKU Detector (RetinaNet)")
 
 st.write("Upload an image containing SKUs. The image will be sent to the SKU detection API and results will be shown below.")
 
