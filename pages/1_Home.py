@@ -3,6 +3,7 @@ import streamlit.components.v1 as components
 from utils.db import fetch_sales_superstore
 from utils.auth import require_auth, logout_button
 from utils.components import app_header, kpi_tile, pill, hide_default_pages_nav
+from streamlit.components.v1 import iframe
 
 st.set_page_config(page_title="Home • SKU Admin", page_icon="🏠", layout="wide")
 hide_default_pages_nav()
@@ -65,39 +66,11 @@ with tab_overview:
     st.dataframe(top_cat, use_container_width=True, hide_index=True)
 
 with tab_china:
-    st.subheader("China Dashboard")
-    # --- Full-bleed styling (edge-to-edge) ---
-    st.markdown("""
-        <style>
-        /* Kill the default horizontal padding and width cap */
-        .main .block-container {
-            padding-left: 0rem;
-            padding-right: 0rem;
-            max-width: 100% !important;
-        }
+    st.subheader("China Outlets Dashboard")
 
-        /* Full-bleed wrapper that escapes the centered container */
-        .full-bleed {
-            margin-left: calc(-50vw + 50%);
-            margin-right: calc(-50vw + 50%);
-        }
-        .full-bleed iframe {
-            width: 100vw;
-            height: 88vh;   /* fill most of the viewport; tweak if needed */
-            border: 0;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    components.html(
-        """
-        <iframe
-          src="https://lookerstudio.google.com/embed/reporting/2f87a2eb-d0c9-4827-ac47-f7e2cdcbedff/page/58qUF"
-          style="width:100%; height:85vh; border:0;"
-          frameborder="0"
-          allowfullscreen
-          sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
-        </iframe>
-        """,
-        height=800,  # Streamlit container height; adjust as you like
-        scrolling=True,
+    iframe(
+        src="https://lookerstudio.google.com/embed/reporting/2f87a2eb-d0c9-4827-ac47-f7e2cdcbedff/page/58qUF",
+        width=1200,  
+        height=800,
+        scrolling=True
     )
