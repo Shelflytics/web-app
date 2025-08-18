@@ -1,0 +1,15 @@
+# Default theme (company green)
+[theme]
+primaryColor="#74C043"
+backgroundColor="#101114"
+secondaryBackgroundColor="#1A1C1F"
+textColor="#E2E2E6"
+
+# To use the alternate light blue from the logo instead, rename this file and
+# use the one below (or change primaryColor to "#57B3E8").
+# Save as .streamlit/config.toml to take effect.
+# [theme]
+# primaryColor="#57B3E8"
+# backgroundColor="#101114"
+# secondaryBackgroundColor="#1A1C1F"
+# textColor="#E2E2E6"
