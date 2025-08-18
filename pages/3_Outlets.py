@@ -8,6 +8,7 @@ st.set_page_config(page_title="Outlets • Admin", page_icon="🏬", layout="wid
 hide_default_pages_nav()
 require_auth()
 with st.sidebar:
+    st.image("assets\shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
@@ -17,6 +18,7 @@ with st.sidebar:
     st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
     st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
     st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
+    st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
 # app_header("Outlets")
