@@ -5,6 +5,7 @@ from utils.auth import require_auth, logout_button
 from utils.components import app_header, hide_default_pages_nav
 from utils.db import get_outlets
 from utils.routing import Stop, greedy_route, geocode_pc
+from utils.planning import assign_stops_to_merch
 
 st.set_page_config(page_title="Merchandisers • Admin", page_icon="🧑‍🤝‍🧑", layout="wide")
 hide_default_pages_nav()
@@ -24,12 +25,14 @@ with st.sidebar:
     st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
+
 app_header("Merchandiser Profiles & Routes")
 
-@st.cache_data(ttl=None)
+@st.cache_data(ttl=1200)
 def build_profiles():
     outs = get_outlets().dropna(subset=["postal_code"]).copy()
-    outs = outs.head(120)
+    outs = outs.head(200)
+    outs["postal_code"] = outs["postal_code"].astype(str)
     outs["label"] = outs.apply(lambda r: f"{r.get('city','Unknown')} ({r['postal_code']})", axis=1)
 
     names = ["Alicia (West Team)","Ben (Central Team)","Chen (East Team)","Dana (North Team)","Evan (Night Shift)","Farah (Weekend Crew)"]
@@ -41,7 +44,7 @@ def build_profiles():
         "Evan (Night Shift)": "+1-555-0114",
         "Farah (Weekend Crew)": "+1-555-0115",
     }
-    homes = {
+    homes_pref = {
         "Alicia (West Team)": ["94618","94708"],
         "Ben (Central Team)": ["10001","10002"],
         "Chen (East Team)": ["98109","98107"],
@@ -49,17 +52,12 @@ def build_profiles():
         "Evan (Night Shift)": ["75201","75001"],
         "Farah (Weekend Crew)": ["30305","30306"],
     }
+    homes = {n: prefs[0] for n, prefs in homes_pref.items()}
 
+    assigned = assign_stops_to_merch(homes, outs, per_merch_max=10)
     profiles = {}
-    chunk = 10
-    for i, name in enumerate(names):
-        seg = outs.iloc[i*chunk:(i+1)*chunk]
-        if len(seg) == 0:
-            seg = outs.sample(min(chunk, len(outs)), replace=False)
-        stops = [Stop(str(r["postal_code"]), r["label"], "normal") for _, r in seg.iterrows()][:10]
-        outlet_zips = {s.postal_code for s in stops}
-        home_pc = next((pc for pc in homes[name] if pc not in outlet_zips), homes[name][0])
-        profiles[name] = {"home": home_pc, "contact": contacts[name], "stops": stops}
+    for name in names:
+        profiles[name] = {"home": homes[name], "contact": contacts[name], "stops": assigned.get(name, [])}
     return profiles
 
 profiles = build_profiles()
@@ -80,12 +78,10 @@ def build_map_html(profiles_dict: dict, modes_dict: dict, version: int):
         res = greedy_route(prof["home"], prof["stops"], mode=mode)
         coords = []
         hc = cached_geocode(prof["home"])
-        if hc:
-            coords.append((hc[0], hc[1], f"{name} Home"))
+        if hc: coords.append((hc[0], hc[1], f"{name} Home"))
         for s in res.ordered:
             c = cached_geocode(s.postal_code)
-            if c:
-                coords.append((c[0], c[1], s.label))
+            if c: coords.append((c[0], c[1], s.label))
         if coords:
             folium.PolyLine([(lat,lng) for lat,lng,_ in coords], tooltip=f"{name} ({mode})", color=color).add_to(m)
             for idx,(lat,lng,label) in enumerate(coords, start=1):

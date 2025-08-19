@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from utils.auth import require_auth, logout_button
@@ -6,6 +5,7 @@ from utils.components import app_header, hide_default_pages_nav
 from utils.db import get_outlets
 from utils.llm import parse_route_instruction
 from utils.routing import Stop, greedy_route, apply_priority_updates
+from utils.planning import assign_stops_to_merch
 
 st.set_page_config(page_title="Routes • Admin", page_icon="🗺️", layout="wide")
 hide_default_pages_nav()
@@ -26,17 +26,12 @@ with st.sidebar:
 
 app_header("GenAI-Powered Route Optimisation")
 
-@st.cache_data(ttl=600)
-def sample_merchandiser_routes():
+@st.cache_data(ttl=1200)
+def build_merch_profiles():
     outs = get_outlets().dropna(subset=["postal_code"]).copy()
-    outs = outs.head(120)
+    outs = outs.head(200)
+    outs["postal_code"] = outs["postal_code"].astype(str)
     outs["label"] = outs.apply(lambda r: f"{r.get('city','Unknown')} ({r['postal_code']})", axis=1)
-
-    bundles, chunk = [], 10
-    for i in range(0, min(len(outs), 60), chunk):
-        bundles.append(outs.iloc[i:i+chunk].copy())
-    while len(bundles) < 6 and len(outs) >= chunk:
-        bundles.append(outs.sample(chunk, replace=False).copy())
 
     names = ["Alicia (West Team)","Ben (Central Team)","Chen (East Team)","Dana (North Team)","Evan (Night Shift)","Farah (Weekend Crew)"]
     contacts = {
@@ -47,7 +42,7 @@ def sample_merchandiser_routes():
         "Evan (Night Shift)": "+1-555-0114",
         "Farah (Weekend Crew)": "+1-555-0115",
     }
-    homes = {
+    homes_pref = {
         "Alicia (West Team)": ["94618","94708"],
         "Ben (Central Team)": ["10001","10002"],
         "Chen (East Team)": ["98109","98107"],
@@ -55,21 +50,15 @@ def sample_merchandiser_routes():
         "Evan (Night Shift)": ["75201","75001"],
         "Farah (Weekend Crew)": ["30305","30306"],
     }
+    homes = {n: prefs[0] for n, prefs in homes_pref.items()}
 
-    merchandisers = {}
-    for idx, name in enumerate(names):
-        b = bundles[min(idx, len(bundles)-1)]
-        stops = [Stop(str(r["postal_code"]), r["label"], "normal") for _, r in b.iterrows()][:10]
-        outlet_zips = {s.postal_code for s in stops}
-        home_pc = next((pc for pc in homes[name] if pc not in outlet_zips), homes[name][0])
-        merchandisers[name] = {
-            "home_postal": home_pc,
-            "contact": contacts[name],
-            "stops": stops,
-        }
-    return merchandisers
+    assigned = assign_stops_to_merch(homes, outs, per_merch_max=10)
+    profiles = {}
+    for name in names:
+        profiles[name] = {"home_postal": homes[name], "contact": contacts[name], "stops": assigned.get(name, [])}
+    return profiles
 
-merch = sample_merchandiser_routes()
+merch = build_merch_profiles()
 
 left, right = st.columns([2,1])
 with left:
