@@ -22,4 +22,4 @@ def black_to_white_logo(input_path, output_path):
 
 # Example usage
 black_to_white_logo("assets\shelflytics_logo_no_word_transparent.png", "assets\shelflytics_logo_no_word_transparent_white.png")
-black_to_white_logo("assets\shelflytics_logo_transparent.png", "assets\shelflytics_logo_transparent_white.png")
+black_to_white_logo("assets\shelflytics_logo_transparent.png", "assets/shelflytics_logo_transparent_white.png")

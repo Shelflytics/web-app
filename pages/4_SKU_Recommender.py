@@ -21,7 +21,8 @@ with st.sidebar:
     st.page_link("pages/7_Merchandisers.py", label="🧑‍🤝‍🧑 Merchandisers")
     st.page_link("pages/chatbot_page.py", label="💬 Chatbot")
     st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
-    st.page_link("pages/sku_detection.py", label="👁️ Detector")
+    st.page_link("pages/sku_detection.py", label="👁️ Detector") 
+    st.page_link("pages/policy_faq.py", label="❓ Policy FAQ")
     logout_button()
 
 app_header("SKU Recommender")

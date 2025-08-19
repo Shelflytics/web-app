@@ -13,16 +13,17 @@ from utils.auth import require_auth, logout_button
 from utils.components import app_header, hide_default_pages_nav
 from utils.db import get_outlets
 from utils.routing import Stop, greedy_route, geocode_pc
+from PIL import Image
 
 # Configure your SKU detection API endpoint here
-SKU_API_URL = "http://localhost:8000/detect/upload?confidence_threshold=0.3"  # <-- replace with real endpoint
+SKU_API_URL = "http://localhost:5000/detect/upload?confidence_threshold=0.3"  # <-- replace with real endpoint
 
 st.set_page_config(page_title="Detector • Admin", page_icon="👁️", layout="wide")
 hide_default_pages_nav()
 require_auth()
 
 with st.sidebar:
-    st.image("assets\shelflytics_logo_transparent_white.png")
+    st.image("assets/shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
@@ -33,6 +34,7 @@ with st.sidebar:
     st.page_link("pages/chatbot_page.py", label="💬 Chatbot") 
     st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
     st.page_link("pages/sku_detection.py", label="👁️ Detector") 
+    st.page_link("pages/policy_faq.py", label="❓ Policy FAQ")
     logout_button()
 
 # Initialize history in session state
@@ -118,7 +120,41 @@ if submit:
                     if isinstance(image_b64, str) and image_b64.startswith("data:"):
                         image_b64 = image_b64.split(",", 1)[1]
                     img_bytes = base64.b64decode(image_b64)
-                    st.image(img_bytes, caption="Detected SKUs", use_column_width=True)
+                    st.image(img_bytes, caption="Detected SKUs", use_container_width=True)
+
+                    # Provide a download button that converts the returned image to JPG
+                    try:
+                        img_buf = BytesIO(img_bytes)
+                        img = Image.open(img_buf).convert("RGB")
+                        out_buf = BytesIO()
+                        img.save(out_buf, format="JPEG", quality=95)
+                        jpg_bytes = out_buf.getvalue()
+
+                        base_name = (uploaded_file.name.rsplit(".", 1)[0]
+                                     if (uploaded_file and "." in uploaded_file.name)
+                                     else "detected_image")
+                        file_name = f"{base_name}_detected.jpg"
+
+                        st.download_button(
+                            label="Download image as JPG",
+                            data=jpg_bytes,
+                            file_name=file_name,
+                            mime="image/jpeg",
+                        )
+                    except Exception:
+                        # Fallback: offer raw bytes if conversion fails
+                        try:
+                            raw_name = (uploaded_file.name
+                                        if uploaded_file and uploaded_file.name
+                                        else "detected_image.jpg")
+                            st.download_button(
+                                label="Download raw image",
+                                data=img_bytes,
+                                file_name=raw_name,
+                                mime="application/octet-stream",
+                            )
+                        except Exception:
+                            pass
                 except Exception:
                     st.info("Returned image could not be decoded and displayed.")
 
