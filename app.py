@@ -48,6 +48,11 @@ if __name__ == "__main__":
 
     if not is_authenticated():
         hide_entire_sidebar()
+
+        # one-time logout success popup
+        if st.session_state.pop("just_logged_out", False):
+            st.success("Successfully logged out!")
+
         tab1, tab2 = st.tabs(["Login", "Setup 2FA"])
         with tab1: login_ui()
         with tab2: setup_2fa_ui()

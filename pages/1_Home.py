@@ -9,6 +9,10 @@ st.set_page_config(page_title="Home • SKU Admin", page_icon="🏠", layout="wi
 hide_default_pages_nav()
 require_auth()
 
+# one-time welcome message only immediately after login
+if st.session_state.pop("just_logged_in", False):
+    st.success("Welcome back, sales manager!")
+
 with st.sidebar:
     st.image("assets\shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
@@ -29,8 +33,7 @@ app_header("Admin Dashboard")
 tab_overview, tab_china = st.tabs(["United States", "China"])
 
 with tab_overview:
-    pill("Note: Dashboard widgets are placeholders for your future code.")
-
+   
     # Quick actions that actually navigate
     a,b,c,d = st.columns(4)
     with a:

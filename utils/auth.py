@@ -13,6 +13,10 @@ cookie_manager = CookieManager()
 COOKIE_KEY = "sku_admin_auth"                 
 COOKIE_MAX_AGE = 60 * 60 * 12                 # 12 hours 
 
+# Navigation targets
+LOGIN_PAGE = "app.py"
+HOME_PAGE  = "pages/1_Home.py"
+
 def _qr_png_b64(secret: str) -> str:
     totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name="user@sku-admin-portal", issuer_name="SKU Admin Portal"
@@ -43,10 +47,11 @@ def login_ui():
             totp = pyotp.TOTP(SECRET_KEY)
             if password == MASTER_PASSWORD and totp.verify(token):
                 st.session_state.authenticated = True
-                # Persist for 12h (adjust as needed)
                 cookie_manager.set(COOKIE_KEY, "true", max_age=COOKIE_MAX_AGE, key="auth_set")
+                # one-time popup for Home page
+                st.session_state["just_logged_in"] = True
                 st.success("Login successful!")
-                st.rerun()
+                st.switch_page(HOME_PAGE)  # go straight to Home
             else:
                 st.error("Invalid credentials or 2FA code")
 
@@ -59,12 +64,13 @@ def setup_2fa_ui():
     st.caption("After setting up, go back to Login and authenticate.")
 
 def require_auth():
-    # Hide default nav + sidebar if not logged in
     from utils.components import hide_entire_sidebar, hide_default_pages_nav
     hide_default_pages_nav()
     if not is_authenticated():
         hide_entire_sidebar()
-        st.info("Please login first.")
+        # optional: set a flag if you ever want to show a message on login page
+        st.session_state["redirected_to_login"] = True
+        st.switch_page(LOGIN_PAGE)  # hard redirect to login
         st.stop()
 
 def logout_button(sidebar=True):
@@ -72,4 +78,7 @@ def logout_button(sidebar=True):
     if area.button("Logout"):
         cookie_manager.delete(COOKIE_KEY, key="auth_del")
         st.session_state.authenticated = False
-        st.rerun()
+        # one-time popup for login page
+        st.session_state["just_logged_out"] = True
+        st.switch_page(LOGIN_PAGE)  # go to login immediately
+
