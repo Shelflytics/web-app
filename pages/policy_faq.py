@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from utils.components import app_header, hide_default_pages_nav
 from utils.auth import require_auth, logout_button
 
-st.set_page_config(page_title="Policy Navigator", layout="wide")
+st.set_page_config(page_title="Policy Navigator  • Admin", page_icon="❓", layout="wide")
 hide_default_pages_nav()
 require_auth()
 
