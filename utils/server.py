@@ -31,18 +31,19 @@ from langchain_core.exceptions import OutputParserException
 # Google Generative AI
 import google.generativeai as genai
 
+import streamlit as st
+
 load_dotenv()
 
 # =============================================================================
 # Database Configuration & Models
 # =============================================================================
-
 # Supabase/PostgreSQL Credentials
-DB_HOST = os.getenv("SUPABASE_DB_HOST")
-DB_USER = os.getenv("SUPABASE_DB_USER")
-DB_PASSWORD = os.getenv("SUPABASE_DB_PASSWORD")
-DB_NAME = os.getenv("SUPABASE_DB_NAME")
-DB_PORT = os.getenv("SUPABASE_DB_PORT")
+DB_HOST = st.secrets.get("SUPABASE_DB_HOST")
+DB_USER = st.secrets.get("SUPABASE_DB_USER")
+DB_PASSWORD = st.secrets.get("SUPABASE_DB_PASSWORD")
+DB_NAME = st.secrets.get("SUPABASE_DB_NAME")
+DB_PORT = st.secrets.get("SUPABASE_DB_PORT")
 
 # URL-encode the password for the database URI
 ENCODED_DB_PASSWORD = quote_plus(DB_PASSWORD)
