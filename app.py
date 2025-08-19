@@ -3,7 +3,7 @@ import multiprocessing
 import sys
 import os
 import time # Import time for potential small startup delay
-# from utils.server import run_server
+from utils.server import run_server
 
 from utils.auth import login_ui, setup_2fa_ui, is_authenticated
 from utils.components import hide_default_pages_nav, hide_entire_sidebar
@@ -48,6 +48,15 @@ if __name__ == "__main__":
 
     if not is_authenticated():
         hide_entire_sidebar()
+        # Pretty, centered login header
+        LOGO = "assets/shelflytics_logo_transparent_white.png"  # use forward slashes
+
+        c1, c2, c3 = st.columns([1, 3, 1])  # center column is wider
+        with c2:
+            st.image(LOGO, width=4200)  # cap width; tweak 320–420 as you like
+  
+
+        st.divider()
 
         # one-time logout success popup
         if st.session_state.pop("just_logged_out", False):
