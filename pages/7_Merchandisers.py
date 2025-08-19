@@ -25,7 +25,6 @@ with st.sidebar:
     st.page_link("pages/sku_detection.py", label="👁️ Detector") 
     logout_button()
 
-
 app_header("Merchandiser Profiles & Routes")
 
 @st.cache_data(ttl=1200)
@@ -71,7 +70,7 @@ def cached_geocode(pc: str):
 
 @st.cache_data(ttl=None)
 def build_map_html(profiles_dict: dict, modes_dict: dict, version: int):
-    m = folium.Map(location=[39.50, -98.35], zoom_start=4)
+    m = folium.Map(location=[39.50, -98.35], zoom_start=4, width="100%", height=620, control_scale=True, tiles="cartodbpositron")
     colors = ["red","blue","green","purple","orange","darkred"]
     for (name, prof), color in zip(profiles_dict.items(), colors):
         mode = modes_dict.get(name, "driving")
@@ -86,7 +85,9 @@ def build_map_html(profiles_dict: dict, modes_dict: dict, version: int):
             folium.PolyLine([(lat,lng) for lat,lng,_ in coords], tooltip=f"{name} ({mode})", color=color).add_to(m)
             for idx,(lat,lng,label) in enumerate(coords, start=1):
                 folium.CircleMarker((lat,lng), radius=4, popup=f"{name} · #{idx}: {label}", color=color, fill=True, fill_opacity=0.7).add_to(m)
-    return m._repr_html_()
+    html = m.get_root().render()
+    css = "<style>.leaflet-container{width:100%!important;min-height:620px!important}.folium-map{width:100%!important;height:620px!important}figure{width:100%!important;margin:0}</style>"
+    return css + html
 
 if "merch_map_version" not in st.session_state:
     st.session_state.merch_map_version = 0
@@ -104,7 +105,7 @@ with colB:
 if st.session_state.merch_map_html is None:
     st.session_state.merch_map_html = build_map_html(profiles, default_modes, st.session_state.merch_map_version)
 
-st.components.v1.html(st.session_state.merch_map_html, height=540, scrolling=False)
+st.components.v1.html(st.session_state.merch_map_html, height=640, width=1200, scrolling=False)
 
 st.divider()
 st.subheader("Leg details for a merchandiser")
