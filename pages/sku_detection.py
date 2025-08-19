@@ -15,7 +15,7 @@ from utils.db import get_outlets
 from utils.routing import Stop, greedy_route, geocode_pc
 
 # Configure your SKU detection API endpoint here
-SKU_API_URL = "http://localhost:8000/detect/upload?confidence_threshold=0.3"  # <-- replace with real endpoint
+SKU_API_URL = "http://localhost:5000/detect/upload?confidence_threshold=0.3"  # <-- replace with real endpoint
 
 st.set_page_config(page_title="Detector • Admin", page_icon="👁️", layout="wide")
 hide_default_pages_nav()
