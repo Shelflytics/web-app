@@ -15,7 +15,7 @@ hide_default_pages_nav()
 require_auth()
 
 with st.sidebar:
-    st.image("assets\shelflytics_logo_transparent_white.png")
+    st.image("assets/shelflytics_logo_transparent_white.png")
     st.page_link("pages/1_Home.py", label="🏠 Home")
     st.page_link("pages/2_SKUs.py", label="📦 SKUs")
     st.page_link("pages/3_Outlets.py", label="🏬 Outlets")
@@ -26,7 +26,7 @@ with st.sidebar:
     st.page_link("pages/chatbot_page.py", label="💬 Chatbot")
     st.page_link("pages/predict_page.py", label="📈 Predict Item Performance")
     st.page_link("pages/sku_detection.py", label="👁️ Detector")
-    st.page_link("pages/policy_faq.py", label="Policy FAQ")
+    st.page_link("pages/policy_faq.py", label="❓ Policy FAQ")
     logout_button()
 
 def _make_serializable(obj: Any) -> Any:
@@ -74,7 +74,7 @@ def read_pdf_bytes(path: str) -> Optional[bytes]:
 def build_prompt(snippets: List[str], question: str) -> str:
     system = "You are a helpful internal policy assistant. Use only the provided context to answer. If answer not present, say 'I don't know - consult the policies.'"
     context = "\n\n".join([f"[{i+1}] {s}" for i, s in enumerate(snippets)])
-    user_message = f"Context:\n{context}\n\nQuestion: {question}\n\nAnswer concisely and cite sources like [filename]."
+    user_message = f"Context:\n{context}\n\nQuestion: {question}\n\n. Answer concisely."
     return f"{system}\n\n{user_message}"
 
 
@@ -121,6 +121,24 @@ def sanitize_source_to_pdf(pdfs_dir: str, source: str) -> Optional[Path]:
         except Exception:
             return None
     return None
+
+
+def relevance_label(score: Any) -> str:
+    """Map a numeric similarity score to a human-friendly relevance label.
+
+    - >= 0.75 -> high relevance
+    - >= 0.50 -> medium relevance
+    - otherwise -> low relevance
+    """
+    try:
+        s = float(score)
+    except Exception:
+        return "unknown relevance"
+    if s >= 0.75:
+        return "high relevance"
+    if s >= 0.5:
+        return "medium relevance"
+    return "low relevance"
 
 
 def main():
@@ -201,30 +219,46 @@ def main():
             src = r.get("source") or "Unknown"
             idx = r.get("chunk_id")
             score = r.get("score")
-            with st.expander(f"{src} — chunk {idx} — score {score:.4f}"):
+            # derive a safe file stem and a human-readable relevance label
+            file_name = Path(str(src)).stem.strip("[]")
+            rel = relevance_label(score)
+
+            # map relevance to a colored emoji for quick visual scanning
+            if isinstance(rel, str) and rel.startswith("high"):
+                emoji = "🟢"
+            elif isinstance(rel, str) and rel.startswith("medium"):
+                emoji = "🟡"
+            elif isinstance(rel, str) and rel.startswith("low"):
+                emoji = "🔴"
+            else:
+                emoji = "⚪️"
+
+            # show file name + colored relevance in the expander header
+            with st.expander(f"{file_name} - {emoji} {rel}"):
                 st.write(r.get("text", ""))
-                col1, col2 = st.columns([1, 1])
-                pdf_path = sanitize_source_to_pdf(pdfs_dir, src)
+
+                # show a progress bar for the raw similarity score (0-100%)
+                try:
+                    pct = max(0, min(100, int(float(score) * 100)))
+                    st.progress(pct)
+                    st.caption(f"Similarity score: {float(score):.3f} ({pct}%)")
+                except Exception:
+                    st.caption("Similarity score: unknown")
+
+                pdf_path = sanitize_source_to_pdf(pdfs_dir, f"{file_name}.pdf")
                 if pdf_path and pdf_path.exists():
                     pdf_bytes = read_pdf_bytes(str(pdf_path))
+                    if pdf_bytes:
+                        st.download_button(
+                            label=f"Download {Path(pdf_path).name}",
+                            data=pdf_bytes,
+                            file_name=Path(pdf_path).name,
+                            mime="application/pdf",
+                        )
+                    else:
+                        st.info("PDF exists but could not be read")
                 else:
-                    pdf_bytes = None
-
-                with col1:
-                    if pdf_bytes:
-                        # View inline
-                        if st.button(f"View {src}", key=f"view-{src}-{idx}"):
-                            b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-                            pdf_display = f'<embed src="data:application/pdf;base64,{b64}" type="application/pdf" width="100%" height="700px" />'
-                            st.components.v1.html(pdf_display, height=720, scrolling=True)
-                    else:
-                        st.info("PDF not available for this source")
-
-                with col2:
-                    if pdf_bytes:
-                        st.download_button(label=f"Download {Path(pdf_path).name}", data=pdf_bytes, file_name=Path(pdf_path).name, mime="application/pdf")
-                    else:
-                        st.write("")
+                    st.info("PDF not found for this source")
 
 
 if __name__ == "__main__":
