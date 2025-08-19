@@ -225,15 +225,27 @@ def main():
         st.write(answer)
 
         st.subheader("Cited sources")
+
+        # Group results by source file so multiple chunks from the same PDF are shown together
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
         for r in results:
             src = r.get("source") or "Unknown"
-            idx = r.get("chunk_id")
-            score = r.get("score")
-            # derive a safe file stem and a human-readable relevance label
             file_name = Path(str(src)).stem.strip("[]")
-            rel = relevance_label(score)
+            grouped.setdefault(file_name, []).append(r)
 
-            # map relevance to a colored emoji for quick visual scanning
+        # sort groups by highest chunk score descending
+        groups_sorted = sorted(
+            grouped.items(),
+            key=lambda kv: max((float(x.get("score", 0)) for x in kv[1])),
+            reverse=True,
+        )
+
+        for file_name, chunks in groups_sorted:
+            # compute aggregate relevance from the best chunk
+            scores = [float(c.get("score", 0)) for c in chunks]
+            best_score = max(scores) if scores else 0.0
+            rel = relevance_label(best_score)
+
             if isinstance(rel, str) and rel.startswith("high"):
                 emoji = "🟢"
             elif isinstance(rel, str) and rel.startswith("medium"):
@@ -243,18 +255,25 @@ def main():
             else:
                 emoji = "⚪️"
 
-            # show file name + colored relevance in the expander header
-            with st.expander(f"{file_name} - {emoji} {rel}"):
-                st.write(r.get("text", ""))
+            header = f"{file_name} ({len(chunks)} chunk{'s' if len(chunks) != 1 else ''}) - {emoji} {rel}"
+            with st.expander(header, expanded=False):
+                st.caption(f"Aggregated from {len(chunks)} snippet(s). Best similarity: {best_score:.3f}")
 
-                # show a progress bar for the raw similarity score (0-100%)
-                try:
-                    pct = max(0, min(100, int(float(score) * 100)))
-                    st.progress(pct)
-                    st.caption(f"Similarity score: {float(score):.3f} ({pct}%)")
-                except Exception:
-                    st.caption("Similarity score: unknown")
+                # show each chunk with its own mini-header so users can distinguish them
+                for c in sorted(chunks, key=lambda x: float(x.get("score", 0)), reverse=True):
+                    cid = c.get("chunk_id")
+                    score = float(c.get("score", 0))
+                    st.markdown(f"**Chunk {cid} — Score: {score:.3f}**")
+                    st.write(c.get("text", ""))
 
+                    try:
+                        pct = max(0, min(100, int(score * 100)))
+                        st.progress(pct)
+                        st.caption(f"Similarity score: {score:.3f} ({pct}%)")
+                    except Exception:
+                        st.caption("Similarity score: unknown")
+
+                # offer the PDF download once per file
                 pdf_path = sanitize_source_to_pdf(pdfs_dir, f"{file_name}.pdf")
                 if pdf_path and pdf_path.exists():
                     pdf_bytes = read_pdf_bytes(str(pdf_path))
