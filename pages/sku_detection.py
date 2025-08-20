@@ -16,7 +16,7 @@ from utils.routing import Stop, greedy_route, geocode_pc
 from PIL import Image
 
 # Configure your SKU detection API endpoint here
-SKU_API_URL = "http://localhost:5000/detect/upload?confidence_threshold=0.3"  # <-- replace with real endpoint
+SKU_API_URL = "http://localhost:5000/detect/upload"  # <-- replace with real endpoint
 
 st.set_page_config(page_title="Detector • Admin", page_icon="👁️", layout="wide")
 hide_default_pages_nav()
@@ -58,6 +58,22 @@ st.write("Upload an image containing SKUs. The image will be sent to the SKU det
 
 with st.form("sku_form"):
     uploaded_file = st.file_uploader("Choose an image file", type=["png", "jpg", "jpeg"])
+    confidence = st.slider(
+        "Select confidence threshold",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.01,
+        format="%0.2f",
+    )
+    col_l, col_r = st.columns(2)
+    with col_l:
+        st.caption("More detections")
+    with col_r:
+        # add a narrow rightmost subcolumn so the caption sits flush to the far right
+        spacer, rightmost = st.columns([2.5, 1])
+        with rightmost:
+            st.caption("Fewer detections")
     submit = st.form_submit_button("Detect")
 
 if submit:
@@ -74,10 +90,16 @@ if submit:
 
             with st.spinner("Sending image to SKU detection API..."):
                 for field in field_names:
-                    attempt = {"field": field}
+                    attempt = {"field": field, "params": {"confidence_threshold": confidence}}
                     files = {field: file_tuple}
                     try:
-                        r = requests.post(SKU_API_URL, files=files, timeout=60)
+                        # include confidence threshold as a query param
+                        r = requests.post(
+                            SKU_API_URL,
+                            params={"confidence_threshold": confidence},
+                            files=files,
+                            timeout=60,
+                        )
                     except Exception as e:
                         attempt["error"] = str(e)
                         attempts.append(attempt)
@@ -173,6 +195,7 @@ if submit:
                 "timestamp": datetime.utcnow().isoformat(timespec="seconds") + "Z",
                 "filename": uploaded_file.name,
                 "num_detections": int(num) if num is not None else 0,
+                "confidence_threshold": float(confidence),
             }
             st.session_state.sku_history.insert(0, entry)
 
